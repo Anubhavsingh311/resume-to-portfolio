@@ -129,7 +129,7 @@
   <div class="intro">
     <span class="eyebrow">A one-file portfolio maker</span>
     <h1>Let your résumé<br><em>do the talking.</em></h1>
-    <p>Upload a plain-text résumé and get a polished, downloadable portfolio — written from your actual experience.</p>
+    <p>Upload a plain-text résumé and get a polished, downloadable portfolio — written from your actual experience, nothing invented.</p>
   </div>
 
   <div class="workspace">
@@ -148,6 +148,17 @@
           <small id="file-meta">Plain text only · .txt files</small>
         </div>
       </button>
+
+      <div>
+        <p class="panel-label" style="margin-bottom:6px">Gemini API Key</p>
+        <input id="api-key-input" type="password"
+          placeholder="AIzaSy…  (from aistudio.google.com)"
+          style="width:100%;padding:11px 13px;background:var(--base);border:1px solid color-mix(in srgb,var(--accent) 40%,transparent);border-radius:var(--r);font:13px/1.6 'Lato',sans-serif;color:var(--ink);outline:none"
+          autocomplete="off">
+        <p style="font-size:11px;color:var(--muted);margin-top:4px">
+          Get a free key at <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com</a>
+        </p>
+      </div>
 
       <button class="textarea-toggle" id="toggle-textarea" type="button">Or paste your résumé text instead</button>
       <textarea class="resume-textarea" id="resume-textarea" placeholder="Paste your résumé text here…" rows="8"></textarea>
@@ -172,7 +183,7 @@
       <div class="preview-empty" id="state-empty">
         <div class="ornament">✦</div>
         <h3>Your portfolio will appear here.</h3>
-        <p>Click Generate and  we'll compose your portfolio from your experience.</p>
+        <p>Upload or paste your résumé and click Generate. We'll compose your portfolio from your actual experience — nothing invented.</p>
       </div>
 
       <div class="loading-state" id="state-loading">
@@ -204,6 +215,8 @@ const stateEmpty     = document.getElementById("state-empty");
 const stateLoading   = document.getElementById("state-loading");
 const loadingStep    = document.getElementById("loading-step");
 const portfolioSheet = document.getElementById("portfolio-sheet");
+
+const apiKeyInput    = document.getElementById("api-key-input");
 
 // ── State ─────────────────────────────────────────────────────
 let resumeText       = "";
@@ -248,12 +261,15 @@ btnGenerate.addEventListener("click", generate);
 
 async function generate() {
   if (!resumeText) return;
-  setLoading(true, "Connecting to AI…");
+  const apiKey = apiKeyInput.value.trim();
+  if (!apiKey) { showError("Please enter your Gemini API key."); return; }
+
+  setLoading(true, "Connecting to Gemini…");
   clearError();
 
-  const SYSTEM = `You are a precise resume parser. Extract only information explicitly present in the resume. Never invent, infer, or add anything not stated. Return ONLY valid JSON — no markdown, no code fences, no text outside the object.`;
+  const prompt = `You are a precise resume parser. Extract only information explicitly present in the resume. Never invent, infer, or add anything not stated. Return ONLY valid JSON — no markdown, no code fences, no text outside the object.
 
-  const USER = `Parse this resume and return a single JSON object with this exact structure. Use "" for missing strings and [] for missing arrays. Do not add any fields not listed below.
+Parse this resume and return a single JSON object with this exact structure. Use "" for missing strings and [] for missing arrays. Do not add any fields not listed below.
 
 {
   "name": "",
@@ -276,32 +292,28 @@ Resume:
 ${resumeText}`;
 
   try {
-    setLoadingStep("Sending to Claude AI…");
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": "AIzaSyAQ.Ab8RN6JcAr-GKnJRXlpzDjhKCjwSt-FtIIQmeLWHEJp4BdyvQA",
-        "anthropic-version": "2023-06-01",
-        "anthropic-dangerous-direct-browser-access": "true"
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 2048,
-        system: SYSTEM,
-        messages: [{ role: "user", content: USER }]
-      })
-    });
+    setLoadingStep("Sending to Gemini AI…");
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.2, responseMimeType: "application/json" }
+        })
+      }
+    );
 
     if (!res.ok) {
       const errData = await res.json().catch(() => ({}));
-      throw new Error(errData?.error?.message || `API error ${res.status}`);
+      throw new Error(errData?.error?.message || `Gemini API error ${res.status}`);
     }
 
     setLoadingStep("Parsing response…");
     const data = await res.json();
-    const raw  = (data?.content || []).map(b => b.text || "").join("").trim();
-    if (!raw) throw new Error("Empty response received. Please try again.");
+    const raw  = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+    if (!raw) throw new Error("Empty response from Gemini. Please try again.");
 
     // Strip any accidental fences
     const cleaned = raw.replace(/^```(?:json)?\s*/i,"").replace(/```\s*$/,"").trim();
@@ -538,7 +550,8 @@ function setLoading(on, msg) {
 }
 function showError(msg) { errorMsg.textContent=msg; errorMsg.classList.add("visible"); }
 function clearError()   { errorMsg.textContent="";  errorMsg.classList.remove("visible"); }
-function updateBtn()    { btnGenerate.disabled = !resumeText.trim(); }
+function updateBtn()    { btnGenerate.disabled = !resumeText.trim() || !apiKeyInput.value.trim(); }
+apiKeyInput.addEventListener("input", updateBtn);
 
 showState("empty");
 </script>
