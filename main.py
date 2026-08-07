@@ -1,6 +1,4 @@
 """
-Resume to Portfolio Generator - Backend
-========================================
 FastAPI backend that accepts resume uploads (PDF/DOCX),
 extracts text, sends to Gemini API, and returns structured JSON.
 """
