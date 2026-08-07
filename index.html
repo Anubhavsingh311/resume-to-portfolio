@@ -59,7 +59,6 @@
   .btn-generate:not(:disabled):hover{background:#5e6d5b;transform:translateY(-2px)}
   .btn-generate .arrow{font-size:22px;line-height:0}
 
-  .right-panel{background:var(--base);padding:30px;min-width:0}
   .preview-topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:22px}
   .preview-topbar h2{font:600 26px/1.1 'Playfair Display',serif;color:var(--accent);margin:6px 0 0}
   .btn-download{padding:10px 14px;background:var(--accent);color:var(--base);border-radius:6px;font-size:12px;font-weight:700;white-space:nowrap;transition:background .2s,transform .18s;display:none}
@@ -78,35 +77,8 @@
   .loading-state p{font-size:14px;color:var(--muted)}
   .loading-steps{margin-top:12px;font-size:12px;color:var(--accent)}
 
-  .portfolio-sheet{background:var(--base);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;display:none}
-  .portfolio-sheet.visible{display:block}
-  .p-hero{padding:42px 28px 34px;text-align:center;border-bottom:2px solid var(--card)}
-  .p-hero h1{font:600 clamp(28px,5vw,48px)/1 'Playfair Display',serif;color:var(--accent);letter-spacing:-.03em;margin:6px 0 10px}
-  .p-hero .hl{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
-  .p-body{padding:30px 28px 36px}
-  .p-section{margin-bottom:30px}
-  .p-section:last-child{margin-bottom:0}
-  .p-section>h2{font:600 19px/1.2 'Playfair Display',serif;color:var(--accent);margin-bottom:13px;padding-bottom:8px;border-bottom:2px solid var(--card)}
-  .lead{font-size:14px;line-height:1.7}
-  .pills{display:flex;flex-wrap:wrap;gap:7px}
-  .pill{display:inline-flex;padding:5px 11px;background:var(--card);color:var(--accent);border-radius:999px;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase}
-  .pill.sm{background:var(--base);border:1px solid var(--card)}
-  .card-stack{display:grid;gap:11px}
-  .p-card{background:var(--card);border-radius:7px;padding:18px}
-  .card-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:4px}
-  .p-card h3{font:600 16px/1.2 'Playfair Display',serif;color:var(--accent)}
-  .p-card time{font-size:11px;color:var(--muted);flex:0 0 auto}
-  .company-name{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
-  .p-card ul{padding-left:17px;margin:0;font-size:13px;line-height:1.65}
-  .p-card .desc{font-size:13px;line-height:1.65;margin:6px 0 10px}
-  .edu-list{display:grid;gap:12px}
-  .edu-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
-  .edu-row h3{font:600 15px/1.2 'Playfair Display',serif;color:var(--accent);margin-bottom:2px}
-  .edu-row p{font-size:13px}
-  .edu-row time{font-size:11px;color:var(--muted);flex:0 0 auto}
-  .ach-list{padding-left:17px;font-size:13.5px;line-height:1.7}
-  .contact-row{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:13px}
-  .p-footer{padding:12px;border-top:1px solid var(--card);text-align:center;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .right-panel{background:var(--base);padding:30px;min-width:0;display:flex;flex-direction:column}
+  .portfolio-sheet{flex:1;width:100%;min-height:640px;border:none;border-radius:var(--r);display:none}
 
   @media(max-width:780px){
     .shell{width:min(100% - 28px,620px);padding-top:44px}
@@ -115,10 +87,6 @@
     .btn-generate{margin-top:8px}
   }
   @media(max-width:460px){
-    .p-hero{padding:30px 18px 26px}
-    .p-body{padding:22px 16px 28px}
-    .card-head,.edu-row{display:block}
-    .card-head time,.edu-row time{display:block;margin-top:3px}
     .preview-topbar{display:block}
     .btn-download{margin-top:10px}
   }
@@ -129,7 +97,7 @@
   <div class="intro">
     <span class="eyebrow">A one-file portfolio maker</span>
     <h1>Let your résumé<br><em>do the talking.</em></h1>
-    <p>Upload a plain-text résumé and get a clean, downloadable portfolio — written from your actual experience, nothing invented.</p>
+    <p>Upload a plain-text résumé and get a polished, downloadable portfolio — written from your actual experience, nothing invented.</p>
   </div>
 
   <div class="workspace">
@@ -194,7 +162,7 @@
         </div>
       </div>
 
-      <div class="portfolio-sheet" id="portfolio-sheet"></div>
+      <iframe class="portfolio-sheet" id="portfolio-sheet" frameborder="0" title="Portfolio preview"></iframe>
     </div>
   </div>
 </div>
@@ -213,46 +181,41 @@ const btnText        = document.getElementById("btn-text");
 const btnDownload    = document.getElementById("btn-download");
 const stateEmpty     = document.getElementById("state-empty");
 const stateLoading   = document.getElementById("state-loading");
-const loadingStep    = document.getElementById("loading-step");
 const portfolioSheet = document.getElementById("portfolio-sheet");
-
 const apiKeyInput    = document.getElementById("api-key-input");
+const loadingStep    = document.getElementById("loading-step");
 
 // ── State ─────────────────────────────────────────────────────
 let resumeText       = "";
-let currentPortfolio = null;
 let outFileName      = "portfolio";
+let currentPortfolio = null; // { html, css, js }
 
 // ── File upload ───────────────────────────────────────────────
 fileDropBtn.addEventListener("click", () => fileInput.click());
-fileInput.addEventListener("change", async e => {
-  const file = e.target.files[0];
+fileInput.addEventListener("change", e => {
+  const file = e.target.files?.[0];
   if (!file) return;
-  if (!/\.txt$/i.test(file.name) && file.type !== "text/plain") {
-    showError("Please choose a plain-text file (.txt)."); return;
-  }
-  const text = await file.text();
-  if (!text.trim()) { showError("That file is empty."); return; }
-  resumeText = text.trim();
-  fileLabel.textContent = file.name;
-  fileMeta.textContent  = `${resumeText.length.toLocaleString()} characters ready`;
-  outFileName = file.name.replace(/\.txt$/i,"").toLowerCase().replace(/[^a-z0-9]+/g,"-") || "portfolio";
-  resumeTextarea.value  = resumeText;
-  clearError(); updateBtn();
+  const reader = new FileReader();
+  reader.onload = ev => {
+    resumeText = ev.target.result || "";
+    fileLabel.textContent = file.name;
+    fileMeta.textContent  = `${(file.size / 1024).toFixed(1)} KB · ready`;
+    outFileName = file.name.replace(/\.txt$/i, "").replace(/[^a-z0-9]/gi, "-").toLowerCase() || "portfolio";
+    clearError(); updateBtn();
+  };
+  reader.readAsText(file);
 });
 
 // ── Paste toggle ──────────────────────────────────────────────
 toggleTextarea.addEventListener("click", () => {
-  const open = resumeTextarea.classList.toggle("visible");
-  toggleTextarea.textContent = open ? "Hide text input" : "Or paste your résumé text instead";
+  resumeTextarea.classList.toggle("visible");
+  toggleTextarea.textContent = resumeTextarea.classList.contains("visible")
+    ? "Hide text area" : "Or paste your résumé text instead";
 });
 resumeTextarea.addEventListener("input", () => {
-  resumeText = resumeTextarea.value.trim();
-  if (resumeText) {
-    fileLabel.textContent = "Text pasted manually";
-    fileMeta.textContent  = `${resumeText.length.toLocaleString()} characters ready`;
-    outFileName = "portfolio";
-  }
+  resumeText = resumeTextarea.value;
+  if (resumeText.trim()) { fileLabel.textContent = "Using pasted text"; fileMeta.textContent = ""; }
+  else { fileLabel.textContent = "Choose resume.txt"; fileMeta.textContent = "Plain text only · .txt files"; }
   clearError(); updateBtn();
 });
 
@@ -267,40 +230,33 @@ async function generate() {
   setLoading(true, "Connecting to Gemini…");
   clearError();
 
-  const prompt = `You are a precise resume parser. Extract only information explicitly present in the resume. Never invent, infer, or add anything not stated. Return ONLY valid JSON — no markdown, no code fences, no text outside the object.
-
-Parse this resume and return a single JSON object with this exact structure. Use "" for missing strings and [] for missing arrays. Do not add any fields not listed below.
-
-{
-  "name": "",
-  "headline": "",
-  "summary": "",
-  "skills": [],
-  "education": [{"degree":"","institution":"","year":""}],
-  "experience": [{"title":"","company":"","duration":"","responsibilities":[]}],
-  "projects": [{"name":"","description":"","technologies":[]}],
-  "achievements": [],
-  "contact": {"email":"","phone":"","linkedin":"","github":"","website":""}
-}
-
-Rules:
-- summary: 2-3 sentences max, factual only, no embellishment
-- headline: short professional identity line (e.g. "Backend Developer · Python · AWS")
-- Return ONLY the JSON object, nothing else
-
-Resume:
-${resumeText}`;
+  const prompt =
+    "You are a portfolio website generator. Given a resume, produce a complete, polished portfolio webpage.\n\n" +
+    "Return ONLY a valid JSON object with exactly these three fields — no markdown fences, no extra text:\n" +
+    '{\n' +
+    '  "html": "full body content as HTML (no <html>/<head>/<body> tags, just inner content)",\n' +
+    '  "css": "all CSS as a single string — self-contained, no external dependencies except Google Fonts",\n' +
+    '  "js": ""\n' +
+    '}\n\n' +
+    "Design requirements:\n" +
+    "- Elegant, professional look. Warm earthy palette: background #f1e0c5, accent #71816d, card #c9b79c, ink #1a1a1a\n" +
+    "- Google Fonts: Lato (300/400/700) for body, Playfair Display (400/600/700/italic) for headings\n" +
+    "- Include this link tag at the very start of the html field value: <link href=\"https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap\" rel=\"stylesheet\">\n" +
+    "- Sections (only if data present): hero with name + headline, profile summary, skills as pill badges, experience cards, education, projects, achievements, contact links\n" +
+    "- Never invent information not present in the resume\n" +
+    "- js field can be empty string\n\n" +
+    "Resume:\n" + resumeText;
 
   try {
     setLoadingStep("Sending to Gemini AI…");
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${encodeURIComponent(apiKey)}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.2, responseMimeType: "application/json" }
+          generationConfig: { temperature: 0.4, responseMimeType: "application/json" }
         })
       }
     );
@@ -315,17 +271,29 @@ ${resumeText}`;
     const raw  = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
     if (!raw) throw new Error("Empty response from Gemini. Please try again.");
 
-    // Strip any accidental fences
-    const cleaned = raw.replace(/^```(?:json)?\s*/i,"").replace(/```\s*$/,"").trim();
+    // Extract JSON regardless of markdown fences or preamble text
+    let cleaned = raw;
+    const fenceMatch = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+    if (fenceMatch) {
+      cleaned = fenceMatch[1].trim();
+    } else {
+      const s = raw.indexOf("{"), e = raw.lastIndexOf("}");
+      if (s !== -1 && e > s) cleaned = raw.slice(s, e + 1);
+    }
 
     let portfolio;
     try { portfolio = JSON.parse(cleaned); }
     catch { throw new Error("Could not parse the AI response. Please try again."); }
 
+    if (!portfolio.html || !portfolio.css) {
+      throw new Error("AI response missing required fields (html/css). Please try again.");
+    }
+
     setLoadingStep("Building your portfolio…");
-    currentPortfolio = normalise(portfolio);
-    renderPreview(currentPortfolio);
+    currentPortfolio = { html: portfolio.html || "", css: portfolio.css || "", js: portfolio.js || "" };
+    portfolioSheet.srcdoc = buildStandaloneHtml(currentPortfolio);
     btnDownload.classList.add("visible");
+    showState("portfolio");
 
   } catch (err) {
     showError(err.message || "Something went wrong. Please try again.");
@@ -335,211 +303,38 @@ ${resumeText}`;
   }
 }
 
-// ── Normalise ─────────────────────────────────────────────────
-function normalise(p) {
-  return {
-    name:         p.name         || "",
-    headline:     p.headline     || "",
-    summary:      p.summary      || "",
-    skills:       Array.isArray(p.skills)       ? p.skills.filter(Boolean)       : [],
-    education:    Array.isArray(p.education)    ? p.education                    : [],
-    experience:   Array.isArray(p.experience)   ? p.experience                   : [],
-    projects:     Array.isArray(p.projects)     ? p.projects                     : [],
-    achievements: Array.isArray(p.achievements) ? p.achievements.filter(Boolean) : [],
-    contact:      (p.contact && typeof p.contact === "object") ? p.contact : {}
-  };
-}
-
-// ── Render preview ────────────────────────────────────────────
-function esc(s) {
-  return String(s||"").replace(/[&<>'"]/g, c =>
-    ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]||c));
-}
-function safeUrl(u) { return u && /^https?:\/\//i.test(u) ? u : ""; }
-
-function renderPreview(p) {
-  const c = p.contact || {};
-  let html = `
-    <div class="p-hero">
-      <span class="eyebrow">Portfolio</span>
-      <h1>${esc(p.name)||"Your Name"}</h1>
-      ${p.headline ? `<p class="hl">${esc(p.headline)}</p>` : ""}
-    </div>
-    <div class="p-body">`;
-
-  if (p.summary)
-    html += `<div class="p-section"><h2>Profile</h2><p class="lead">${esc(p.summary)}</p></div>`;
-
-  if (p.skills.length)
-    html += `<div class="p-section"><h2>Skills</h2><div class="pills">
-      ${p.skills.map(s=>`<span class="pill">${esc(s)}</span>`).join("")}
-    </div></div>`;
-
-  if (p.experience.length)
-    html += `<div class="p-section"><h2>Experience</h2><div class="card-stack">
-      ${p.experience.map(j=>`
-        <div class="p-card">
-          <div class="card-head"><h3>${esc(j.title)}</h3><time>${esc(j.duration)}</time></div>
-          ${j.company?`<p class="company-name">${esc(j.company)}</p>`:""}
-          ${(j.responsibilities||[]).length?`<ul>${j.responsibilities.map(r=>`<li>${esc(r)}</li>`).join("")}</ul>`:""}
-        </div>`).join("")}
-    </div></div>`;
-
-  if (p.education.length)
-    html += `<div class="p-section"><h2>Education</h2><div class="edu-list">
-      ${p.education.map(e=>`
-        <div class="edu-row">
-          <div><h3>${esc(e.degree)}</h3><p>${esc(e.institution)}</p></div>
-          <time>${esc(e.year)}</time>
-        </div>`).join("")}
-    </div></div>`;
-
-  if (p.projects.length)
-    html += `<div class="p-section"><h2>Projects</h2><div class="card-stack">
-      ${p.projects.map(pr=>`
-        <div class="p-card">
-          <h3>${esc(pr.name)}</h3>
-          ${pr.description?`<p class="desc">${esc(pr.description)}</p>`:""}
-          ${(pr.technologies||[]).length?`<div class="pills" style="margin-top:8px">${pr.technologies.map(t=>`<span class="pill sm">${esc(t)}</span>`).join("")}</div>`:""}
-        </div>`).join("")}
-    </div></div>`;
-
-  if (p.achievements.length)
-    html += `<div class="p-section"><h2>Achievements</h2>
-      <ul class="ach-list">${p.achievements.map(a=>`<li>${esc(a)}</li>`).join("")}</ul>
-    </div>`;
-
-  const links = [
-    c.email   ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : "",
-    c.phone   ? `<span>${esc(c.phone)}</span>` : "",
-    c.linkedin && safeUrl(c.linkedin) ? `<a href="${esc(safeUrl(c.linkedin))}" target="_blank" rel="noreferrer">LinkedIn</a>` : "",
-    c.github   && safeUrl(c.github)   ? `<a href="${esc(safeUrl(c.github))}" target="_blank" rel="noreferrer">GitHub</a>` : "",
-    c.website  && safeUrl(c.website)  ? `<a href="${esc(safeUrl(c.website))}" target="_blank" rel="noreferrer">Website</a>` : "",
-  ].filter(Boolean);
-  if (links.length)
-    html += `<div class="p-section"><h2>Contact</h2><div class="contact-row">${links.join("")}</div></div>`;
-
-  html += `</div><div class="p-footer">Portfolio Atelier · AI-Assisted Resume Portfolio Generator</div>`;
-  portfolioSheet.innerHTML = html;
-  showState("portfolio");
-}
-
-// ── Download standalone HTML ──────────────────────────────────
-btnDownload.addEventListener("click", () => {
-  if (!currentPortfolio) return;
-  const html = buildStandaloneHtml(currentPortfolio);
-  const blob  = new Blob([html], { type:"text/html;charset=utf-8" });
-  const url   = URL.createObjectURL(blob);
-  const a     = document.createElement("a");
-  a.href = url; a.download = `${outFileName}-portfolio.html`; a.click();
-  URL.revokeObjectURL(url);
-});
-
+// ── Build downloadable HTML ───────────────────────────────────
 function buildStandaloneHtml(p) {
-  const e2 = s => String(s||"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]||c));
-  const su  = u => u && /^https?:\/\//i.test(u) ? u : "";
-
-  const expH = p.experience.map(j=>`
-    <article class="card">
-      <div class="entry-head"><div><h3>${e2(j.title)}</h3><p class="co">${e2(j.company)}</p></div><time>${e2(j.duration)}</time></div>
-      ${(j.responsibilities||[]).length?`<ul>${j.responsibilities.map(r=>`<li>${e2(r)}</li>`).join("")}</ul>`:""}
-    </article>`).join("");
-
-  const projH = p.projects.map(pr=>`
-    <article class="card">
-      <h3>${e2(pr.name)}</h3>
-      <p>${e2(pr.description)}</p>
-      <div class="pills">${(pr.technologies||[]).map(t=>`<span>${e2(t)}</span>`).join("")}</div>
-    </article>`).join("");
-
-  const eduH = p.education.map(e=>`
-    <div class="edu-row">
-      <div><h3>${e2(e.degree)}</h3><p>${e2(e.institution)}</p></div>
-      <time>${e2(e.year)}</time>
-    </div>`).join("");
-
-  const linkH = [
-    p.contact?.email?`<a href="mailto:${e2(p.contact.email)}">${e2(p.contact.email)}</a>`:"",
-    p.contact?.phone?`<span>${e2(p.contact.phone)}</span>`:"",
-    p.contact?.linkedin&&su(p.contact.linkedin)?`<a href="${e2(su(p.contact.linkedin))}" target="_blank">LinkedIn</a>`:"",
-    p.contact?.github&&su(p.contact.github)?`<a href="${e2(su(p.contact.github))}" target="_blank">GitHub</a>`:"",
-    p.contact?.website&&su(p.contact.website)?`<a href="${e2(su(p.contact.website))}" target="_blank">Website</a>`:"",
-  ].filter(Boolean).join("");
-
-  const sec = (t,b) => b ? `<section><h2>${t}</h2>${b}</section>` : "";
-
   return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${e2(p.name||"Portfolio")}</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--base:#f1e0c5;--card:#c9b79c;--accent:#71816d;--ink:#1a1a1a}
-body{background:var(--base);color:var(--ink);font:400 16px/1.7 Lato,sans-serif}
-a{color:var(--accent);font-weight:700}
-.wrap{max-width:860px;margin:0 auto}
-.hero{text-align:center;padding:80px 24px 52px;border-bottom:2px solid var(--card)}
-.eyebrow{display:block;font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:14px}
-.hero h1{font:600 clamp(38px,6vw,62px)/.97 'Playfair Display',serif;color:var(--accent);letter-spacing:-.04em;margin-bottom:10px}
-.hero .hl{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(26,26,26,.55)}
-.content{padding:52px 24px 76px}
-section{margin-bottom:44px}
-section>h2{font:600 20px/1.2 'Playfair Display',serif;color:var(--accent);margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--card)}
-.lead{font-size:15px;line-height:1.7}
-.pills{display:flex;flex-wrap:wrap;gap:8px}
-.pills span{background:var(--card);color:var(--accent);padding:5px 11px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase}
-.card{background:var(--card);padding:22px;border-radius:8px;margin-bottom:12px}
-.entry-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:4px}
-.card h3{font:600 17px/1.2 'Playfair Display',serif;color:var(--accent)}
-.card time{font-size:11px;color:rgba(26,26,26,.55);flex:0 0 auto}
-.co{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
-.card p{font-size:13px;line-height:1.65;margin:6px 0 10px}
-.card ul{padding-left:17px;font-size:13px;line-height:1.65;margin:0}
-.card .pills{margin-top:10px}
-.card .pills span{background:var(--base)}
-.edu-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:12px}
-.edu-row h3{font:600 15px/1.2 'Playfair Display',serif;color:var(--accent);margin-bottom:2px}
-.edu-row p{font-size:13px}
-.edu-row time{font-size:11px;color:rgba(26,26,26,.55);flex:0 0 auto}
-.ach-list{padding-left:18px;font-size:14px;line-height:1.7}
-.contact{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:13px}
-.contact a,.contact span{color:var(--accent);font-weight:700}
-footer{border-top:1px solid var(--card);padding:14px;text-align:center;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(26,26,26,.45)}
-@media(max-width:540px){.entry-head,.edu-row{display:block}.card time,.edu-row time{display:block;margin-top:4px}}
-</style>
+<style>${p.css}</style>
 </head>
 <body>
-<div class="wrap">
-  <header class="hero">
-    <span class="eyebrow">Portfolio</span>
-    <h1>${e2(p.name||"Your Name")}</h1>
-    ${p.headline?`<p class="hl">${e2(p.headline)}</p>`:""}
-  </header>
-  <main class="content">
-    ${sec("Profile", p.summary?`<p class="lead">${e2(p.summary)}</p>`:"")}
-    ${sec("Skills", p.skills.length?`<div class="pills">${p.skills.map(s=>`<span>${e2(s)}</span>`).join("")}</div>`:"")}
-    ${sec("Experience", expH)}
-    ${sec("Education", eduH)}
-    ${sec("Projects", projH)}
-    ${sec("Achievements", p.achievements.length?`<ul class="ach-list">${p.achievements.map(a=>`<li>${e2(a)}</li>`).join("")}</ul>`:"")}
-    ${sec("Contact", linkH?`<div class="contact">${linkH}</div>`:"")}
-  </main>
-  <footer>AI-Assisted Resume Portfolio Generator · AIML GLA Bootcamp '26</footer>
-</div>
+${p.html}
+${p.js ? `<script>${p.js}<\/script>` : ""}
 </body>
 </html>`;
 }
 
+// ── Download ──────────────────────────────────────────────────
+btnDownload.addEventListener("click", () => {
+  if (!currentPortfolio) return;
+  const html = buildStandaloneHtml(currentPortfolio);
+  const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href = url; a.download = `${outFileName}-portfolio.html`; a.click();
+  URL.revokeObjectURL(url);
+});
+
 // ── UI helpers ────────────────────────────────────────────────
 function showState(s) {
-  stateEmpty.style.display    = s==="empty"     ? "grid"  : "none";
-  stateLoading.style.display  = s==="loading"   ? "grid"  : "none";
-  portfolioSheet.style.display = s==="portfolio" ? "block" : "none";
+  stateEmpty.style.display     = s === "empty"     ? "grid"  : "none";
+  stateLoading.style.display   = s === "loading"   ? "grid"  : "none";
+  portfolioSheet.style.display = s === "portfolio" ? "block" : "none";
 }
 function setLoadingStep(msg) { loadingStep.textContent = msg; }
 function setLoading(on, msg) {
@@ -548,8 +343,8 @@ function setLoading(on, msg) {
   if (on) showState("loading");
   if (msg) setLoadingStep(msg);
 }
-function showError(msg) { errorMsg.textContent=msg; errorMsg.classList.add("visible"); }
-function clearError()   { errorMsg.textContent="";  errorMsg.classList.remove("visible"); }
+function showError(msg) { errorMsg.textContent = msg; errorMsg.classList.add("visible"); }
+function clearError()   { errorMsg.textContent = "";  errorMsg.classList.remove("visible"); }
 function updateBtn()    { btnGenerate.disabled = !resumeText.trim() || !apiKeyInput.value.trim(); }
 apiKeyInput.addEventListener("input", updateBtn);
 
