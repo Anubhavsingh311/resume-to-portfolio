@@ -1,4 +1,4 @@
-# Resume-to-Poortfolio Generator
+# Resume-to-Portfolio Generator
 
 Turn your plain-text resume into a polished portfolio webpage in seconds — no coding required.
 
