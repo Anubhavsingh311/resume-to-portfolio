@@ -30,7 +30,7 @@ Claude produced a complete `index.html` with embedded CSS, matching the Figma la
 
 ## Entry 2
 
-**Tool:** ChatGPT 5.6 LUNA
+**Tool:** ChatGPT 5.6 TERRA
 **Stage:** Week 2 — Ai_parser Module Debugging
 **Team member responsible:** Shivanshu Rajput
 
