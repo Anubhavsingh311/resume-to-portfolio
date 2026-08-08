@@ -24,7 +24,7 @@ Claude produced a complete `index.html` with embedded CSS, matching the Figma la
 - Replaced placeholder section headings with our actual copy.
 - Restructured the skills section from a list to pill badges, which was in our Figma but not correctly reflected in the AI output.
 - Added the Google Fonts `<link>` tag that was missing from the initial `<head>`.
-- Verified cross-browser rendering manually in Chrome and Firefox before committing.
+- Verified cross-browser rendering manually in Chrome and Safari before committing.
 
 ---
 
